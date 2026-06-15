@@ -1,30 +1,58 @@
 #!/bin/bash
-#
-# https://github.com/P3TERX/Actions-OpenWrt
-# File name: diy-part2.sh
-# Description: OpenWrt DIY script part 2 (After Update feeds)
-#
-# Copyright (c) 2019-2024 P3TERX <https://p3terx.com>
-#
-# This is free software, licensed under the MIT License.
-# See /LICENSE for more information.
-#
 
-# Modify default IP
-#sed -i 's/192.168.1.1/192.168.50.5/g' package/base-files/files/bin/config_generate
-
-# Modify default theme
-#sed -i 's/luci-theme-bootstrap/luci-theme-argon/g' feeds/luci/collections/luci/Makefile
-
-# Modify hostname
-#sed -i 's/OpenWrt/P3TERX-Router/g' package/base-files/files/bin/config_generate
-
-# 临时解决Rust问题
+# ===============================
+# Rust workaround（CI兼容）
+# ===============================
 sed -i 's/ci-llvm=true/ci-llvm=false/g' feeds/packages/lang/rust/Makefile
 
-# add date in output file name
+# ===============================
+# 编译日期（文件名区分）
+# ===============================
 sed -i -e '/^IMG_PREFIX:=/i BUILD_DATE := $(shell date +%Y%m%d)' \
-       -e '/^IMG_PREFIX:=/ s/\($(SUBTARGET)\)/\1-$(BUILD_DATE)/' include/image.mk
+       -e '/^IMG_PREFIX:=/ s/\($(SUBTARGET)\)/\1-$(BUILD_DATE)/' \
+       include/image.mk
 
-# set ubi to 122M
-# sed -i 's/reg = <0x5c0000 0x7000000>;/reg = <0x5c0000 0x7a40000>;/' target/linux/mediatek/dts/mt7981b-cudy-tr3000-v1-ubootmod.dts
+# ===============================
+# TR3000 512MB DTS（核心）
+# ===============================
+git clone --depth 1 https://github.com/zhuannn/cudy-tr3000-512 mod512
+
+# 防止重复 patch
+grep -q "cudy-tr3000-512" target/linux/mediatek/image/filogic.mk || \
+cat mod512/openwrt-mod/cudy-tr3000-512.mk >> target/linux/mediatek/image/filogic.mk
+
+# 安全复制 DTS（不依赖文件名）
+find mod512 -name "*.dts" -exec cp -f {} target/linux/mediatek/dts/ \;
+
+# ===============================
+# 4G LTE 驱动（完整必备）
+# ===============================
+cat >> .config <<'EOF'
+
+CONFIG_PACKAGE_kmod-usb-net=y
+CONFIG_PACKAGE_kmod-usb-net-qmi-wwan=y
+CONFIG_PACKAGE_kmod-usb-wdm=y
+
+CONFIG_PACKAGE_kmod-usb-serial=y
+CONFIG_PACKAGE_kmod-usb-serial-option=y
+CONFIG_PACKAGE_kmod-usb-serial-wwan=y
+
+CONFIG_PACKAGE_kmod-usb-net-rndis=y
+CONFIG_PACKAGE_kmod-usb-net-cdc-ether=y
+CONFIG_PACKAGE_kmod-usb-net-cdc-mbim=y
+
+CONFIG_PACKAGE_uqmi=y
+CONFIG_PACKAGE_umbim=y
+CONFIG_PACKAGE_wwan=y
+CONFIG_PACKAGE_usb-modeswitch=y
+
+CONFIG_PACKAGE_luci-proto-qmi=y
+CONFIG_PACKAGE_luci-proto-mbim=y
+
+EOF
+
+# ===============================
+# 强制生效配置（关键）
+# ===============================
+make defconfig
+make oldconfig
