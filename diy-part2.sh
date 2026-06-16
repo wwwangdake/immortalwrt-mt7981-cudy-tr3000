@@ -15,55 +15,101 @@ echo " DIY PART2: TR3000 512M Full Build"
 echo " PassWall removed for stable build"
 echo "============================================================"
 
-# ===============================
+# ============================================================
+
+# GitHub tarball download helper
+
+# ============================================================
+
+download_repo() {
+local owner="$1"
+local repo="$2"
+local dir="$3"
+local branch=""
+local url=""
+local tmp=""
+local ok="0"
+
+echo "============================================================"
+echo "Download ${owner}/${repo}"
+echo "Target ${dir}"
+echo "============================================================"
+
+rm -rf "$dir"
+
+for branch in main master; do
+url="https://codeload.github.com/${owner}/${repo}/tar.gz/refs/heads/${branch}"
+tmp="/tmp/${owner}-${repo}-${branch}.tar.gz"
+
+```
+if curl -fsSL --retry 3 --connect-timeout 20 "$url" -o "$tmp"; then
+  mkdir -p "$dir"
+  tar -xzf "$tmp" -C "$dir" --strip-components=1
+  rm -f "$tmp"
+  ok="1"
+  echo "OK ${owner}/${repo} ${branch}"
+  break
+fi
+
+rm -f "$tmp"
+```
+
+done
+
+if [ "$ok" != "1" ]; then
+echo "Tarball failed, try git clone"
+git clone --depth=1 "https://github.com/${owner}/${repo}.git" "$dir"
+fi
+}
+
+# ============================================================
 
 # Rust workaround CI compatibility
 
-# ===============================
+# ============================================================
 
 if [ -f feeds/packages/lang/rust/Makefile ]; then
 sed -i 's/ci-llvm=true/ci-llvm=false/g' feeds/packages/lang/rust/Makefile
 fi
 
-# ===============================
+# ============================================================
 
-# Remove unstable / unwanted packages
+# Remove PassWall related packages
 
-# ===============================
+# ============================================================
 
 rm -rf package/passwall
 rm -rf package/passwall-packages
-rm -rf package/passwall-packages/geoview
-rm -rf package/passwall-packages/*geoview*
+rm -rf feeds/packages/net/xray-core
+rm -rf feeds/packages/net/sing-box
 
-# ===============================
+# ============================================================
 
 # Build date in image filename
 
-# ===============================
+# ============================================================
 
 if [ -f include/image.mk ] && ! grep -q 'BUILD_DATE := $(shell date +%Y%m%d)' include/image.mk; then
 perl -0pi -e 's/^(IMG_PREFIX:=.*)$/BUILD_DATE := $(shell date +%Y%m%d)\n$1/m' include/image.mk
 perl -0pi -e 's/$(SUBTARGET)/$(SUBTARGET)-$(BUILD_DATE)/g' include/image.mk
 fi
 
-# ===============================
+# ============================================================
 
 # Basic path check
 
-# ===============================
+# ============================================================
 
 test -f target/linux/mediatek/image/filogic.mk
 test -d target/linux/mediatek/dts
 
-# ===============================
+# ============================================================
 
 # TR3000 512MB DTS injection
 
-# ===============================
+# ============================================================
 
-rm -rf mod512
-git clone --depth 1 https://github.com/zhuannn/cudy-tr3000-512 mod512
+download_repo "zhuannn" "cudy-tr3000-512" "mod512"
 
 test -f mod512/openwrt-mod/cudy-tr3000-512.mk
 test -n "$(find mod512 -name '*.dts' -print -quit)"
@@ -71,19 +117,24 @@ test -n "$(find mod512 -name '*.dts' -print -quit)"
 echo "========== MOD512 MK CHECK =========="
 grep -E "cudy_tr3000-512mb-v1|DEVICE_DTS|IMAGE_SIZE|TARGET_DEVICES" mod512/openwrt-mod/cudy-tr3000-512.mk || true
 
-grep -q "cudy_tr3000-512mb-v1" target/linux/mediatek/image/filogic.mk || 
+if ! grep -q "cudy_tr3000-512mb-v1" target/linux/mediatek/image/filogic.mk; then
 cat mod512/openwrt-mod/cudy-tr3000-512.mk >> target/linux/mediatek/image/filogic.mk
+fi
 
-find mod512 -name "*.dts" -exec cp -f {} target/linux/mediatek/dts/ ;
+echo "========== COPY 512M DTS =========="
+find mod512 -name "*.dts" -print0 | while IFS= read -r -d '' dtsfile; do
+echo "Copy DTS: $dtsfile"
+cp -f "$dtsfile" target/linux/mediatek/dts/
+done
 
 grep -q "cudy_tr3000-512mb-v1" target/linux/mediatek/image/filogic.mk
 ls target/linux/mediatek/dts/ | grep -q "tr3000.*512"
 
-# ===============================
+# ============================================================
 
 # Built-in files directories
 
-# ===============================
+# ============================================================
 
 mkdir -p files/etc/uci-defaults
 mkdir -p files/etc/init.d
@@ -91,11 +142,11 @@ mkdir -p files/etc/vohive
 mkdir -p files/usr/bin
 mkdir -p files/www/luci-static/custom
 
-# ===============================
+# ============================================================
 
 # Default system settings
 
-# ===============================
+# ============================================================
 
 cat > files/etc/uci-defaults/90-custom-defaults <<'EOF'
 #!/bin/sh
@@ -115,11 +166,11 @@ EOF
 
 chmod +x files/etc/uci-defaults/90-custom-defaults
 
-# ===============================
+# ============================================================
 
 # USB / HDD automount default
 
-# ===============================
+# ============================================================
 
 cat > files/etc/uci-defaults/91-automount <<'EOF'
 #!/bin/sh
@@ -137,19 +188,19 @@ EOF
 
 chmod +x files/etc/uci-defaults/91-automount
 
-# ===============================
+# ============================================================
 
 # VoHive binary built-in
 
 # TR3000 MT7981 is arm64
 
-# ===============================
+# ============================================================
 
 VOHIVE_VERSION="v1.3.5"
 VOHIVE_URL="https://github.com/iniwex5/vohive-release/releases/download/${VOHIVE_VERSION}/vohive_${VOHIVE_VERSION}_linux_arm64"
 
 echo "========== DOWNLOAD VOHIVE =========="
-curl -L --retry 3 --connect-timeout 20 -o files/usr/bin/vohive "$VOHIVE_URL"
+curl -fL --retry 3 --connect-timeout 20 -o files/usr/bin/vohive "$VOHIVE_URL"
 chmod +x files/usr/bin/vohive
 
 cat > files/etc/vohive/config.yaml <<'EOF'
@@ -191,11 +242,11 @@ EOF
 
 chmod +x files/etc/uci-defaults/92-vohive
 
-# ===============================
+# ============================================================
 
 # LuCI custom corner badge
 
-# ===============================
+# ============================================================
 
 cat > files/www/luci-static/custom/halox-badge.js <<'EOF'
 (function () {
@@ -276,11 +327,11 @@ EOF
 
 chmod +x files/etc/uci-defaults/93-halox-badge
 
-# ===============================
+# ============================================================
 
 # Remove PassWall related configs from previous 512m.config
 
-# ===============================
+# ============================================================
 
 sed -i '/CONFIG_PACKAGE_.*passwall/d' .config || true
 sed -i '/CONFIG_PACKAGE_.*PassWall/d' .config || true
@@ -303,6 +354,12 @@ sed -i '/CONFIG_PACKAGE_haproxy/d' .config || true
 sed -i '/CONFIG_PACKAGE_ipt2socks/d' .config || true
 sed -i '/CONFIG_PACKAGE_microsocks/d' .config || true
 sed -i '/CONFIG_PACKAGE_simple-obfs/d' .config || true
+
+# ============================================================
+
+# Full package config
+
+# ============================================================
 
 cat >> .config <<'EOF'
 
@@ -471,6 +528,12 @@ EOF
 
 make defconfig
 
+# ============================================================
+
+# Final checks
+
+# ============================================================
+
 grep -q '^CONFIG_TARGET_mediatek_filogic_DEVICE_cudy_tr3000-512mb-v1=y' .config
 grep -q '^CONFIG_TARGET_PROFILE="DEVICE_cudy_tr3000-512mb-v1"' .config
 ! grep -q '^CONFIG_TARGET_mediatek_filogic_DEVICE_cudy_tr3000-v1-256mb=y' .config
@@ -507,4 +570,5 @@ ls -lh files/etc/uci-defaults/92-vohive
 ls -lh files/etc/uci-defaults/93-halox-badge
 
 echo "OK: TR3000 512MB stable build config + DTS + 4G drivers + Nikki + VoHive + HaloX badge enabled."
+
 
