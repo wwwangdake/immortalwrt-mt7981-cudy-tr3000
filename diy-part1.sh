@@ -1,13 +1,17 @@
 #!/bin/bash
+
 #
+
 # https://github.com/P3TERX/Actions-OpenWrt
+
 # File name: diy-part1.sh
+
 # Description: OpenWrt DIY script part 1 (Before Update feeds)
+
 #
-# Copyright (c) 2019-2024 P3TERX <https://p3terx.com>
-#
+
 # This is free software, licensed under the MIT License.
-# See /LICENSE for more information.
+
 #
 
 set -e
@@ -19,17 +23,21 @@ echo "============================================================"
 mkdir -p package
 
 # ============================================================
+
 # Keep local luci-compat package if exists
+
 # ============================================================
 
 if [ -d "$GITHUB_WORKSPACE/package/luci-compat-keep" ]; then
-  echo "Copy local luci-compat-keep"
-  rm -rf package/luci-compat-keep
-  cp -r "$GITHUB_WORKSPACE/package/luci-compat-keep" package/
+echo "Copy local luci-compat-keep"
+rm -rf package/luci-compat-keep
+cp -r "$GITHUB_WORKSPACE/package/luci-compat-keep" package/
 fi
 
 # ============================================================
+
 # Clean old extra packages
+
 # ============================================================
 
 rm -rf package/passwall
@@ -43,7 +51,9 @@ rm -rf package/luci-app-bandix
 rm -rf package/openwrt-bandix
 
 # ============================================================
+
 # PassWall
+
 # ============================================================
 
 echo "Clone PassWall"
@@ -52,7 +62,9 @@ git clone --depth=1 https://github.com/xiaorouji/openwrt-passwall.git package/pa
 git clone --depth=1 https://github.com/xiaorouji/openwrt-passwall-packages.git package/passwall-packages
 
 # ============================================================
+
 # Nikki
+
 # ============================================================
 
 echo "Clone Nikki"
@@ -60,7 +72,9 @@ echo "Clone Nikki"
 git clone --depth=1 https://github.com/nikkinikki-org/OpenWrt-nikki.git package/nikki
 
 # ============================================================
+
 # LuCI Themes: Aurora / Argon
+
 # ============================================================
 
 echo "Clone Aurora theme"
@@ -74,7 +88,9 @@ git clone --depth=1 https://github.com/jerrykuku/luci-theme-argon.git package/lu
 git clone --depth=1 https://github.com/jerrykuku/luci-app-argon-config.git package/luci-app-argon-config
 
 # ============================================================
+
 # Bandix
+
 # ============================================================
 
 echo "Clone Bandix"
@@ -83,10 +99,12 @@ git clone --depth=1 https://github.com/timsaya/luci-app-bandix.git package/luci-
 git clone --depth=1 https://github.com/timsaya/openwrt-bandix.git package/openwrt-bandix
 
 # ============================================================
-# Fix common package conflicts
+
+# Remove git metadata from local packages
+
 # ============================================================
 
-find package -name ".git" -type d -prune -exec rm -rf {} +
+find package -name ".git" -type d -prune -exec rm -rf {} + || true
 
 echo "============================================================"
 echo " DIY PART1 done"
