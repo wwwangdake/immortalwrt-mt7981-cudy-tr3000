@@ -1,130 +1,224 @@
-感谢大佬的的前人栽树 感谢提供的Fork大佬
-Config 新增 512文件
-workflow 新增512选项
-Part2对应修改好了
-支持 Cudy TR3000 512M
-新增 512M config
-新增 4G QMI / MBIM / RNDIS / CDC / USB Serial 驱动
-Actions 里选择 512M 编译
+# Cudy TR3000 v1 512M ImmortalWrt 自动编译
 
-！！！！仅适合 512M Flash 改版/对应布局机器！！！
-不要刷到普通 128M/256M 机器
-刷机不保留配置
+基于 GitHub Actions 的 **Cudy TR3000 v1 512M Flash 改版机** ImmortalWrt 自动编译项目。
 
-## immortalwrt 源码
-
-编译自 https://github.com/padavanonly/immortalwrt-mt798x-6.6 ，兼容 Cudy Tr3000 128M 新 flash
+本项目适用于已经改装为 **512M Flash** 的 Cudy TR3000 v1，支持在 GitHub Actions 中一键选择 `512M` 编译，并集成常见 4G 模块相关驱动。
 
 ---
 
-## 大分区 ubootmod 固件
+## ⚠️ 重要警告
 
-本仓库默认编译的 ubootmod 固件为 112M 分区，若你想编译 122M 分区固件，请将 `diy-part2.sh` 中取消以下注释：
+本项目固件 **仅适用于 Cudy TR3000 v1 512M Flash 改版机**。
 
-```sh
-# set ubi to 122M
-# sed -i 's/reg = <0x5c0000 0x7000000>;/reg = <0x5c0000 0x7a40000>;/' target/linux/mediatek/dts/mt7981b-cudy-tr3000-v1-ubootmod.dts
+请勿刷入以下设备：
+
+* 原厂 128M Flash 机器
+* 普通 256M Flash 机器
+* 未改 Flash 的机器
+* 不确定 Flash 容量或分区布局的机器
+
+刷错固件可能导致：
+
+* 无法启动
+* 配置丢失
+* 需要 TTL 救砖
+* 需要编程器恢复
+
+刷机有风险，操作需谨慎，风险自负。
+
+---
+
+## 项目特点
+
+* 基于 GitHub Actions 自动编译
+* 支持 Cudy TR3000 v1 512M Flash 改版机
+* Actions 手动运行时可选择 `512M`
+* 基于 `immortalwrt-mt798x-6.6` 源码
+* 新增 512M 设备配置
+* 集成常见 4G 模块驱动
+* 适合旁路由、OpenClash、Mihomo、4G 模块、USB 网卡等场景
+
+---
+
+## 源码来源
+
+ImmortalWrt 源码：
+
+```text
+https://github.com/padavanonly/immortalwrt-mt798x-6.6
+```
+
+本项目基于以下项目整理和适配：
+
+```text
+https://github.com/weekdaycare/immortalwrt-mt7981-cudy-tr3000
+https://github.com/zhuannn/cudy-tr3000-512
 ```
 
 ---
 
-## DHCP uboot
+## 支持设备
 
-编译自 https://github.com/weekdaycare/bl-mt798x-dhcpd 感谢大佬开源，兼容新 flash
-
-![](/uboot.png)
-
-128M uboot 为三分区 uboot 支持原厂 ubi 大小 64MB，扩容 ubi 分区 112MB，最大 ubi 分区 122MB
-
-256M uboot 为单分区 uboot
+| 项目     | 说明                   |
+| ------ | -------------------- |
+| 设备型号   | Cudy TR3000 v1       |
+| Flash  | 512M Flash 改版机       |
+| Target | mediatek / filogic   |
+| SoC    | MT7981               |
+| 内核     | 6.6                  |
+| 设备配置   | cudy_tr3000-512mb-v1 |
 
 ---
 
-## USB 供电控制
+## 不支持设备
 
-上游的最新源码已经打开了默认供电，具体可以见这条 [commit](https://github.com/padavanonly/immortalwrt-mt798x-6.6/commit/86356f8a2f796e5808fda25ce3e3bf6b3cc3278e)
+| 设备                   | 状态            |
+| -------------------- | ------------- |
+| 原厂 128M Flash TR3000 | 不支持           |
+| 普通 256M Flash TR3000 | 不建议刷入 512M 固件 |
+| 非 Cudy TR3000 v1     | 不支持           |
+| 未确认分区布局的机器           | 不建议刷入         |
 
-若你想关闭 USB 供电执行命令
+---
 
-```bash
-echo 0 > /sys/class/gpio/modem_power/value
+## 4G 模块驱动支持
+
+本项目加入了常见 USB 4G 模块相关驱动，主要包括：
+
+* QMI
+* MBIM
+* RNDIS
+* CDC ECM
+* CDC NCM
+* USB Serial
+* Option
+* WWAN
+* CDC WDM
+
+适用于常见 Quectel、Fibocom、Simcom 等 USB 4G 模块。
+
+常见设备示例：
+
+* Quectel EC20
+* Quectel EC25
+* Quectel EP06
+* Fibocom L850
+* Fibocom L860
+* 其他 USB QMI / MBIM / RNDIS 模块
+
+具体兼容性请自行测试。
+
+---
+
+## 编译方法
+
+Fork 本仓库后，进入自己的仓库页面。
+
+打开：
+
+```text
+Actions -> Build OpenWrt -> Run workflow
 ```
 
-恢复供电执行命令
+在编译选项中选择：
 
-```bash
-echo 1 > /sys/class/gpio/modem_power/value
+```text
+512M
+```
+
+然后点击运行编译。
+
+编译完成后，可以在以下位置下载固件：
+
+```text
+Actions Artifacts
+Releases
 ```
 
 ---
 
-## 第三方软件包
+## 固件文件说明
 
-- [OpenClash](https://github.com/vernesong/OpenClash)
-- [Bandix](https://github.com/timsaya/luci-app-bandix)
-- [luci-theme-aurora](https://github.com/eamonxg/luci-theme-aurora)
-- [luci-app-aurora-config](https://github.com/eamonxg/luci-app-aurora-config)
-- luci-app-ttyd
-- luci-app-upnp
-- kmod-usb-net-cdc-ether
-- kmod-usb-net-rndis
-- kmod-mtd-rw
+常见固件文件说明如下：
 
----
+| 文件类型           | 用途                             |
+| -------------- | ------------------------------ |
+| factory.bin    | 一般用于首次刷机                       |
+| sysupgrade.bin | 一般用于 OpenWrt / ImmortalWrt 内升级 |
+| ubootmod       | 大分区 / U-Boot Mod 版本使用          |
 
-## SSH 连接 Action
-
-可以通过 ssh 连接到 Action 工作流来配置 `menuconfig` 。
+如果不确定应该刷哪个文件，请先确认自己的机器分区布局，不要盲刷。
 
 ---
 
-## 编译注意事项
+## 主要修改内容
 
-GitHub Actions 存储有限，大型软件包（如 sing-box 或 alist）建议使用预编译方式，而不是源码编译，即在编译过程中加入已经编译好现成软件包。否则你应该会碰到超长编译时间 + 超出 Action 储存。示例：
+相对原项目，主要做了以下修改：
 
-```sh
-# 创建存储二进制文件的目录
-BIN_DIR="$GITHUB_WORKSPACE/openwrt/files/usr/bin"
-mkdir -p "$BIN_DIR"
+* 新增 `512m.config`
+* GitHub Actions 新增 `512M` 编译选项
+* 适配 `cudy_tr3000-512mb-v1`
+* 修改 part2 以支持 512M 设备
+* 增加常用 4G 模块驱动
+* README 增加说明、使用方法和风险提示
 
-# -------- 下载并解压 xray-core ARM64 -------
-echo "Downloading xray-core..."
-curl -L -o xray.zip https://github.com/XTLS/Xray-core/releases/download/v25.10.15/Xray-linux-arm64-v8a.zip
-unzip -o xray.zip -d "$BIN_DIR"
-chmod +x "$BIN_DIR/xray"
-rm xray.zip
+---
 
-# -------- 下载并解压 sing-box ARM64 -------
-echo "Downloading sing-box..."
-curl -L -o sing-box.tar.gz https://github.com/SagerNet/sing-box/releases/download/v1.12.12/sing-box-1.12.12-linux-arm64.tar.gz
-TMP_DIR=$(mktemp -d)
-tar -xzf sing-box.tar.gz -C "$TMP_DIR"
-mv "$TMP_DIR"/sing-box-1.12.12-linux-arm64/sing-box "$BIN_DIR"/sing-box
-chmod +x "$BIN_DIR/sing-box"
-rm -rf "$TMP_DIR"
-rm sing-box.tar.gz
+## 目录说明
+
+```text
+.github/workflows/
+  openwrt-builder.yml        GitHub Actions 编译流程
+
+config/
+  512m.config                512M Flash 改版机配置
+
+diy-part1.sh                 编译前自定义脚本
+diy-part2.sh                 编译后自定义脚本
+README.md                    项目说明
 ```
 
 ---
 
-## Credits
+## 使用建议
 
-- [bl-mt798x-dhcpd](https://github.com/weekdaycare/bl-mt798x-dhcpd)
-- [bl-mt798x](https://github.com/hanwckf/bl-mt798x)
-- [immortalwrtwrt](https://github.com/padavanonly/immortalwrt-mt798x-6.6)
-- [P3TERX](https://github.com/P3TERX)
-- [Microsoft Azure](https://azure.microsoft.com)
-- [GitHub Actions](https://github.com/features/actions)
-- [OpenWrt](https://github.com/openwrt/openwrt)
-- [coolsnowwolf/lede](https://github.com/coolsnowwolf/lede)
-- [Mikubill/transfer](https://github.com/Mikubill/transfer)
-- [softprops/action-gh-release](https://github.com/softprops/action-gh-release)
-- [Mattraks/delete-workflow-runs](https://github.com/Mattraks/delete-workflow-runs)
-- [dev-drprasad/delete-older-releases](https://github.com/dev-drprasad/delete-older-releases)
-- [peter-evans/repository-dispatch](https://github.com/peter-evans/repository-dispatch)
+刷机前建议确认以下信息：
+
+```text
+1. 机器型号是否为 Cudy TR3000 v1
+2. Flash 是否已经改为 512M
+3. 分区布局是否与 512M 固件匹配
+4. 是否有 TTL 或编程器救砖能力
+5. 是否已经备份原厂固件和 ART / EEPROM / 配置分区
+```
+
+如果你不确定自己的机器是否适合，请不要直接刷入。
 
 ---
 
-## License
+## 免责声明
 
-[MIT](https://github.com/P3TERX/Actions-OpenWrt/blob/main/LICENSE) © [**P3TERX**](https://p3terx.com)
+本项目仅用于学习、研究和个人折腾。
+
+固件由 GitHub Actions 自动编译生成，不保证适用于所有设备和所有使用场景。
+
+刷机存在风险，使用本项目固件导致的设备变砖、数据丢失、无法启动、网络异常等问题，均需自行承担。
+
+---
+
+## 致谢
+
+感谢以下项目和作者：
+
+* OpenWrt
+* ImmortalWrt
+* padavanonly/immortalwrt-mt798x-6.6
+* weekdaycare/immortalwrt-mt7981-cudy-tr3000
+* zhuannn/cudy-tr3000-512
+
+感谢各位大佬的源码、补丁、配置和折腾经验。
+
+
+
+
+
