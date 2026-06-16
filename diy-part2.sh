@@ -18,6 +18,11 @@ if [ -f feeds/packages/lang/rust/Makefile ]; then
 fi
 
 # ===============================
+# Disable unstable packages
+# ===============================
+find package feeds -path '*geoview*' -print || true
+
+# ===============================
 # Build date in image filename
 # ===============================
 if [ -f include/image.mk ] && ! grep -q 'BUILD_DATE := $(shell date +%Y%m%d)' include/image.mk; then
@@ -235,6 +240,13 @@ chmod +x files/etc/uci-defaults/93-halox-badge
 cat >> .config <<'EOF'
 
 # ============================================================
+# Disable unstable packages
+# ============================================================
+
+# CONFIG_PACKAGE_geoview is not set
+# CONFIG_PACKAGE_luci-app-geoview is not set
+
+# ============================================================
 # 4G / LTE / USB modem full drivers
 # ============================================================
 
@@ -368,6 +380,14 @@ CONFIG_PACKAGE_luci-app-ttyd=y
 CONFIG_PACKAGE_luci-app-filebrowser=y
 CONFIG_PACKAGE_luci-app-commands=y
 
+EOF
+
+# Strongly remove geoview if it was enabled by dependency/config
+sed -i '/CONFIG_PACKAGE_geoview=y/d' .config
+sed -i '/CONFIG_PACKAGE_luci-app-geoview=y/d' .config
+cat >> .config <<'EOF'
+# CONFIG_PACKAGE_geoview is not set
+# CONFIG_PACKAGE_luci-app-geoview is not set
 EOF
 
 make defconfig
