@@ -1,6 +1,9 @@
 <img width="400" height="400" alt="image" src="https://github.com/user-attachments/assets/15feaff7-49f2-4927-888f-7ac2258ba5ff" />
-# Cudy TR3000 ImmortalWrt Auto Build 🐱
 
+
+
+
+# Cudy TR3000 ImmortalWrt Auto Build 🐱
 > 给 Cudy TR3000 准备的一套 ImmortalWrt 自动编译仓库。
 > 小猫崽出品，主打一个：能编、能刷、别乱刷。😼
 
