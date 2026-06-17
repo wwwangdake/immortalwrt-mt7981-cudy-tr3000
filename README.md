@@ -2,16 +2,12 @@
 
 
 
-# Cudy TR3000 v1 512M ImmortalWrt 自动编译
+# Cudy TR3000 v1 512M/256/128 ImmortalWrt 自动编译
 
-基于 GitHub Actions 的 **Cudy TR3000 v1 512M Flash 改版机** ImmortalWrt 自动编译项目。
+基于 GitHub Actions 的 **Cudy TR3000 v1 512M Flash 改版机/256M/128M ** ImmortalWrt 自动编译项目。
 
 本项目适用于已经改装为 **512M Flash** 的 Cudy TR3000 v1，支持在 GitHub Actions 中一键选择 `512M` 编译，并集成常见 4G 模块相关驱动。
-修改文件以适配128 
- **128M Flash** 
-修改文件以适配256
- **128M Flash**
- 
+
 刷错固件可能导致：
 
 * 无法启动
