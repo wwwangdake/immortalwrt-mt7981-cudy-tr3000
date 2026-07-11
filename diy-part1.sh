@@ -17,6 +17,12 @@
 #echo 'src-git helloworld https://github.com/fw876/helloworld' >>feeds.conf.default
 #echo 'src-git passwall https://github.com/xiaorouji/openwrt-passwall' >>feeds.conf.default
 
+# Add the official iStore feed. luci-app-store pulls in taskd and its LuCI
+# libraries automatically, providing a complete store rather than UI only.
+if ! grep -q '^src-git istore ' feeds.conf.default; then
+  echo 'src-git istore https://github.com/linkease/istore;main' >>feeds.conf.default
+fi
+
 # Copy custom local packages into OpenWrt tree so they are available during build
 if [ -d "$GITHUB_WORKSPACE/package/luci-compat-keep" ]; then
   mkdir -p package
